@@ -1,0 +1,23 @@
+# --- Ambiente de Prototipagem ---
+jupyterlab==4.0.11
+ipykernel==6.29.0
+
+# --- Manipulação de Dados e Matemática ---
+pandas==2.2.0
+numpy==1.26.4
+scikit-learn==1.4.0
+
+# --- Deep Learning (A Rede Siamesa) ---
+# O PyTorch é a base. Se você tem GPU, configure para CUDA. Se não, a versão CPU atende para o dataset CMU.
+torch==2.2.0
+torchvision==0.17.0
+torchaudio==2.2.0
+
+# --- Visualização (Para analisar o ritmo da digitação) ---
+matplotlib==3.8.2
+seaborn==0.13.2
+
+# --- Backend da Solução Final ---
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+sqlalchemy==2.0.25
