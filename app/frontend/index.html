@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeyGuard | Autenticação Biométrica</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="logo-header">
+            <h1>KeyGuard <span>Core</span></h1>
+            <p>Segurança Baseada em Dinâmica de Digitação</p>
+        </header>
+
+        <div id="view-login" class="view-section active">
+            <h2>Aceder ao Sistema</h2>
+            <form id="form-login">
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="login-email" required placeholder="usuario@empresa.com">
+                </div>
+                <div class="input-group">
+                    <label>Senha</label>
+                    <input type="password" id="login-password" required placeholder="Sua senha">
+                    <small class="hint">O seu ritmo de digitação será analisado.</small>
+
+                    <div id="radar-login" class="biometric-radar">
+                        <span class="radar-empty-text">Radar Inativo...</span>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+            <p class="link-text">Não tem conta? <a href="#" id="link-to-register">Criar uma agora</a></p>
+        </div>
+
+        <div id="view-register" class="view-section hidden">
+            <h2>Novo Registo Biométrico</h2>
+            <form id="form-register">
+                <div class="input-group">
+                    <label>E-mail</label>
+                    <input type="email" id="reg-email" required placeholder="usuario@empresa.com">
+                </div>
+                <div class="input-group">
+                    <label>Defina a sua Senha (Mín. 8 caracteres)</label>
+                    <input type="password" id="reg-password" required>
+                </div>
+
+                <div class="biometric-calibration box-highlight">
+                    <label>Calibração: Digite a senha 5 vezes para criarmos a sua âncora</label>
+                    <input type="password" id="reg-calibration-input" placeholder="Digite e pressione Enter">
+
+                    <div id="radar-register" class="biometric-radar">
+                        <span class="radar-empty-text">Aguardando digitação...</span>
+                    </div>
+
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="reg-progress"></div>
+                    </div>
+                    <p class="counter"><span id="reg-count">0</span> / 5 Concluídas</p>
+                </div>
+
+                <button type="submit" id="btn-register" class="btn-primary" disabled>Finalizar Cadastro</button>
+            </form>
+            <p class="link-text">Já tem conta? <a href="#" id="link-to-login">Voltar ao Login</a></p>
+        </div>
+
+        <div id="view-email-confirm" class="view-section hidden text-center">
+            <div class="icon-success">✉️</div>
+            <h2>Verifique o seu E-mail</h2>
+            <p>Enviámos um link de confirmação para ativar a sua conta.</p>
+            <button id="btn-email-ok" class="btn-secondary">Voltar ao Início</button>
+        </div>
+
+        <div id="view-mfa" class="view-section hidden">
+            <h2 class="alert-text">Anomalia Detetada</h2>
+            <p>A senha está correta, mas não reconhecemos o seu dispositivo ou padrão de digitação. Por favor, verifique a sua identidade.</p>
+            <form id="form-mfa">
+                <div class="input-group">
+                    <label>Código de 6 dígitos enviado por e-mail/SMS</label>
+                    <input type="text" id="mfa-code" required maxlength="6" placeholder="Ex: 123456" class="text-center text-lg">
+                </div>
+                <button type="submit" class="btn-primary">Verificar e Ensinar IA</button>
+            </form>
+            <button id="btn-cancel-mfa" class="btn-link">Cancelar Login</button>
+        </div>
+
+        <div id="view-profile" class="view-section hidden">
+            <div class="profile-header">
+                <h2>Bem-vindo!</h2>
+                <p id="profile-email-display" class="highlight-data"></p>
+                <button id="btn-logout" class="btn-small btn-danger">Sair</button>
+            </div>
+
+            <div class="card">
+                <h3>Atualizar Segurança</h3>
+                <p class="hint">Alterar a senha exige recriação total da sua assinatura biométrica.</p>
+                <form id="form-update-password">
+                    <div class="input-group">
+                        <label>Senha Atual</label>
+                        <input type="password" id="upd-current-password" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Nova Senha</label>
+                        <input type="password" id="upd-new-password" required>
+                    </div>
+
+                    <div class="biometric-calibration box-highlight">
+                        <label>Calibração: Digite a NOVA senha 5 vezes</label>
+                        <input type="password" id="upd-calibration-input" placeholder="Digite e pressione Enter">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="upd-progress"></div>
+                        </div>
+                        <p class="counter"><span id="upd-count">0</span> / 5 Concluídas</p>
+                    </div>
+
+                    <button type="submit" id="btn-update-pass" class="btn-primary" disabled>Trocar Senha</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/static/js/biometrics.js"></script>
+    <script src="/static/js/auth.js"></script>
+</body>
+</html>
