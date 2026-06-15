@@ -31,3 +31,8 @@ class LoginResponseDTO(BaseModel):
     require_mfa: bool
     message: str
     distance: Optional[float] = None
+
+class ContinuousVerifyDTO(BaseModel):
+    email: EmailStr
+    current_vector: List[float]
+    device_id: str

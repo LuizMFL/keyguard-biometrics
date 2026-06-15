@@ -36,6 +36,7 @@ const loginBiometrics = new KeystrokeDynamics('login-password', 'radar-login');
 const regCalibrationBiometrics = new KeystrokeDynamics('reg-calibration-input', 'radar-register');
 const updCurrentBiometrics = new KeystrokeDynamics('upd-current-password');
 const updCalibrationBiometrics = new KeystrokeDynamics('upd-calibration-input');
+const continuousBiometrics = new KeystrokeDynamics('continuous-text-area');
 
 // ==========================================
 // CONTROLO DE VISTAS (SPA)
@@ -286,5 +287,68 @@ document.getElementById('form-update-password').addEventListener('submit', async
         alert(`❌ Erro de Segurança:\n${error.message}`);
         updCurrentBiometrics.reset();
         document.getElementById('upd-current-password').value = '';
+    }
+});
+
+// ==========================================
+// MONITORIZAÇÃO CONTÍNUA COM HIGIENIZAÇÃO DE SINAL
+// ==========================================
+const continuousInput = document.getElementById('continuous-text-area');
+const continuousStatus = document.getElementById('continuous-status');
+
+// Contador de caracteres digitados na janela atual para detecção de anomalia lógica
+let keystrokeCounter = 0;
+
+continuousInput.addEventListener('keyup', async (e) => {
+    if (e.key.length === 1) keystrokeCounter++;
+
+    const vector = continuousBiometrics.generateVector();
+
+    // Se o vetor voltou vazio mas o usuário continua a digitar, significa que ele quebrou os 1.5s de fluidez
+    if (vector.length === 0 && keystrokeCounter > 0) {
+        continuousStatus.innerText = "➔ Estado: Fluidez interrompida. Linha de tempo reiniciada.";
+        continuousStatus.style.color = "var(--text-secondary)";
+        return;
+    }
+
+    // --- DEFESA ANTI-EVASÃO 3: HEURÍSTICA DE SABOTAGEM DE BUFFER ---
+    // Se o usuário digitou 40 vezes mas o vetor limpo não chegou a 20, ele está a tentar evadir o Zero-Trust
+    if (keystrokeCounter >= 40 && vector.length < 20) {
+        alert("🚨 ALERTA DE EVASÃO DETETADA: Comportamento de digitação inconsistente ou sabotagem de sensores. Sessão encerrada.");
+        document.getElementById('btn-logout').click();
+        keystrokeCounter = 0;
+        return;
+    }
+
+    if (vector.length >= 20) {
+        keystrokeCounter = 0; // Reseta o contador de controle pois o bloco está limpo e pronto
+        continuousStatus.innerText = "➔ Estado: Analisando bloco rítmico na IA...";
+        continuousStatus.style.color = "var(--brand-color)";
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/continuous-verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: state.currentUserEmail,
+                    current_vector: vector,
+                    device_id: deviceId
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.authenticated) {
+                continuousStatus.innerText = `➔ Estado: Identidade Confirmada passivamente (Distância: ${data.distance.toFixed(3)})`;
+                continuousStatus.style.color = "var(--success-color)";
+            } else {
+                alert("🚨 ALERTA ZERO TRUST: Assinatura rítmica incompatível! Sessão bloqueada.");
+                document.getElementById('btn-logout').click();
+            }
+        } catch (error) {
+            console.error("Erro na verificação contínua:", error);
+        }
+
+        continuousBiometrics.reset();
     }
 });

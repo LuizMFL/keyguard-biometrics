@@ -2,7 +2,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.api.dtos import UserRegisterDTO, UserLoginDTO, PasswordUpdateDTO, MFAVerifyDTO, LoginResponseDTO
+from app.api.dtos import UserRegisterDTO, UserLoginDTO, PasswordUpdateDTO, MFAVerifyDTO, LoginResponseDTO, \
+    ContinuousVerifyDTO
 from app.infrastructure.database import SessionLocal
 from app.infrastructure.email_service import SmtpEmailService
 from app.infrastructure.repositories import SQLAlchemyUserRepository
@@ -84,3 +85,28 @@ def update_password(data: PasswordUpdateDTO, usecase: AuthenticationUseCase = De
         return {"status": "success", "message": "Senha modificada e âncora recalibrada com sucesso."}
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
+
+@router.post("/continuous-verify")
+def continuous_verify(data: ContinuousVerifyDTO, usecase: AuthenticationUseCase = Depends(get_auth_usecase)):
+    # Buscamos o utilizador
+    user = usecase.repository.get_by_email(data.email)
+    if not user:
+        raise HTTPException(status_code=401, detail="Sessão inválida.")
+
+    # Puxamos a âncora do dispositivo atual
+    if data.device_id not in user.device_biometrics:
+        raise HTTPException(status_code=401, detail="Hardware não autorizado.")
+
+    device_state = user.device_biometrics[data.device_id]
+
+    # Injetamos o vetor de texto livre direto no nosso motor PyTorch
+    ai_result = usecase.ai_service.verify_attempt(
+        anchor_features=device_state.anchor.features,
+        attempt_features=data.current_vector
+    )
+
+    return {
+        "authenticated": ai_result["is_authentic"],
+        "distance": ai_result["distance"]
+    }
