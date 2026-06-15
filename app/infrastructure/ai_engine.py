@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-OPERATIONAL_THRESHOLD = 0.545
+OPERATIONAL_THRESHOLD = 0.500
 EVOLUTION_THRESHOLD = 0.300
 
 # --- NÚMEROS DE OURO UNIVERSAIS (Substitua pelos valores do Notebook 01) ---

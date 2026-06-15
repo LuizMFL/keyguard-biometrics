@@ -1,36 +1,44 @@
 import smtplib
+import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.domain.interfaces import IEmailService
 
 # --- CONFIGURAÇÃO DO SERVIDOR SMTP ---
-# Dica: Pode usar o Mailtrap (SaaS gratuito de testes) ou o Gmail com "Palavra-passe de app"
-SMTP_SERVER = "smtp.gmail.com"  # Altere para o seu provedor se necessário
+SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 SMTP_USER = "joingames.m.miguel@gmail.com"
 SMTP_PASSWORD = "qssd heef vgpk ohyv"
 
+
 class SmtpEmailService(IEmailService):
     def _send(self, to_email: str, subject: str, html_content: str):
-        # Se as credenciais não estiverem configuradas, apenas loga no terminal para não quebrar
         if "AQUI" in SMTP_USER:
             print(f"\n[MOCK EMAIL] Para: {to_email} | Assunto: {subject}\nConteúdo: {html_content}\n")
             return
 
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"] = f"KeyGuard Core <security@keyguard.io>"
-        msg["To"] = to_email
+        def send_worker():
+            msg = MIMEMultipart("alternative")
+            msg["Subject"] = subject
+            msg["From"] = f"KeyGuard Core <security@keyguard.io>"
+            msg["To"] = to_email
+            msg.attach(MIMEText(html_content, "html"))
 
-        msg.attach(MIMEText(html_content, "html"))
+            try:
+                with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+                    server.starttls()
+                    server.login(SMTP_USER, SMTP_PASSWORD)
+                    server.sendmail(msg["From"], to_email, msg.as_string())
+                print(f" [SMTP] E-mail enviado com sucesso para {to_email}")
+            except Exception as e:
+                print(f" [SMTP CRÍTICO] Erro ao enviar e-mail em segundo plano: {str(e)}")
 
-        try:
-            with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-                server.starttls()  # Ativa criptografia de transporte TLS
-                server.login(SMTP_USER, SMTP_PASSWORD)
-                server.sendmail(msg["From"], to_email, msg.as_string())
-        except Exception as e:
-            print(f"Erro crítico ao enviar e-mail via SMTP: {str(e)}")
+        # 2. Instanciamos uma Thread secundária dedicada a executar o 'send_worker'
+        # O parâmetro 'daemon=True' garante que a thread não impede o FastAPI de desligar se parar o servidor
+        email_thread = threading.Thread(target=send_worker, daemon=True)
+
+        # 3. Disparamos a execução em segundo plano imediatamente
+        email_thread.start()
 
     def send_welcome_email(self, to_email: str) -> None:
         subject = "🛡️ Conta Ativada com Sucesso - KeyGuard"
